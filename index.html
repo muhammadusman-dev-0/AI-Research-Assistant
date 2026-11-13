@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Assistant</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body { background: #f0f2f5; min-height: 100vh; padding: 30px 15px; }
+  .box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+  h1 { text-align: center; font-size: 24px; margin-bottom: 5px; }
+  p.sub { text-align: center; color: #666; font-size: 13px; margin-bottom: 20px; }
+  .search-row { display: flex; gap: 10px; }
+  input { flex: 1; padding: 12px 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; }
+  input:focus { border-color: #000; }
+  button { padding: 12px 22px; background: #000; color: white; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: bold; }
+  button:hover { background: #333; }
+  button:disabled { background: #999; cursor: not-allowed; }
+  #result { margin-top: 20px; }
+  .card { background: #f8f9fa; padding: 18px; border-radius: 10px; border-left: 4px solid #000; }
+  .card h3 { text-transform: capitalize; margin-bottom: 12px; font-size: 20px; }
+  .card p { margin-bottom: 8px; line-height: 1.5; font-size: 15px; color: #222; }
+  .tokens { margin-top: 15px; padding: 12px; background: #eef2ff; border-radius: 8px; display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
+  .blocked { background: #ffe0e0; color: #c00; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; border: 1px solid #ffb3b3; }
+  .loading { text-align: center; color: #666; padding: 20px; }
+  .error { background: #ffe0e0; color: #c00; padding: 15px; border-radius: 10px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>🔍 RESEARCH ASSISTANT</h1>
+  <p class="sub">Powered by Gemini + Web Search + Guardrails</p>
+
+  <div class="search-row">
+    <input id="topic" placeholder="Enter topic: python, pakistan..." onkeydown="if(event.key==='Enter') search()">
+    <button id="btn" onclick="search()">Search</button>
+  </div>
+
+  <div id="result"></div>
+</div>
+
+<script>
+async function search(){
+  let topic = document.getElementById("topic").value.trim();
+  let resultDiv = document.getElementById("result");
+  let btn = document.getElementById("btn");
+
+  if(!topic){
+    resultDiv.innerHTML = `<div class="error">Please enter a topic.</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Searching...";
+  resultDiv.innerHTML = `<div class="loading">⏳ Searching internet...</div>`;
+
+  try {
+    let res = await fetch("/research", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({topic: topic})
+    });
+
+    let data = await res.json();
+
+    if(data.blocked){
+      resultDiv.innerHTML = `<div class="blocked">🚫 Blocked: ${data.message}</div>`;
+    } else {
+      let pointsHtml = data.points.map(p => `<p>• ${p}</p>`).join("");
+      resultDiv.innerHTML = `
+        <div class="card">
+          <h3>${data.topic}</h3>
+          ${pointsHtml}
+          <div class="tokens">
+            <span>Input: ${data.input_tokens}</span>
+            <span>Output: ${data.output_tokens}</span>
+            <span>Total: ${data.total_tokens}</span>
+          </div>
+        </div>
+      `;
+    }
+  } catch(err) {
+    resultDiv.innerHTML = `<div class="error">Server se connection nahi hua. Uvicorn chal raha hai? Check karo.</div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Search";
+}
+</script>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 # 🔍 AI Research Assistant
 
-A smart research assistant built with OpenAI Agents SDK + Gemini (via LiteLLM) + FastAPI.
+A  research assistant built with OpenAI Agents SDK + Gemini (via LiteLLM) + FastAPI.
 
 ## Features
 - Web Search Tool (DDGS)
